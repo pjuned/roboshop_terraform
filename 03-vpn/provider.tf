@@ -9,7 +9,7 @@ terraform {
   
   backend "s3" {
     bucket = "76-remote-state"
-    key    = "vpn"
+    key    = "vpn1"
     region = "us-east-1"
     dynamodb_table = "76-locking"
   }
