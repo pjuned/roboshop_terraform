@@ -1,44 +1,37 @@
 #!/bin/bash
-set -euxo pipefail
+set -euo pipefail
 
-LOG=/var/log/openvpn-userdata.log
-exec > >(tee -a $LOG) 2>&1
+SCRIPTS="/usr/local/openvpn_as/scripts"
+USERNAME="openvpn"
+PASSWORD='Openvpn@123'   # Use SSM or Secrets Manager in production
 
-# ---------- Enable IP forwarding ----------
-echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
-sysctl -p
+# Wait until Access Server UI is ready
+until curl -ks https://127.0.0.1:943/ >/dev/null 2>&1; do sleep 3; done
 
-# ---------- Get Public IP (IMDSv2) ----------
-TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
-  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+# 1. Accept the license agreement
+$SCRIPTS/sacli --key 'eula_accepted' --value 'true' ConfigPut
 
-ENDPOINT=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
-  http://169.254.169.254/latest/meta-data/public-ipv4)
+# 2. Set admin user and password
+$SCRIPTS/sacli --user "$USERNAME" --new_pass "$PASSWORD" SetLocalPassword
+$SCRIPTS/sacli --user "$USERNAME" --key 'prop_superuser' --value 'true' UserPropPut
 
-# ---------- Download installer ----------
-cd /root
-curl -fsSL https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh -o openvpn-install.sh
-chmod +x openvpn-install.sh
+# 3. VPN port and protocol
+$SCRIPTS/sacli --key 'vpn.server.port'     --value '1194' ConfigPut
+$SCRIPTS/sacli --key 'vpn.server.protocol' --value 'udp'  ConfigPut
 
-# ---------- Install OpenVPN (EXPLICIT) ----------
-AUTO_INSTALL=y \
-APPROVE_INSTALL=y \
-APPROVE_IP=y \
-IPV6_SUPPORT=n \
-PORT_CHOICE=1 \
-PROTOCOL_CHOICE=2 \
-DNS=1 \
-COMPRESSION_ENABLED=n \
-CUSTOMIZE_ENC=n \
-ENDPOINT=$ENDPOINT \
-./openvpn-install.sh install
+# 4. DNS configuration: use Access Server host DNS
+$SCRIPTS/sacli --key 'vpn.client.dns.server_auto' --value 'true' ConfigPut
+$SCRIPTS/sacli --key 'cs.prof.defaults.dns.0' --value '8.8.8.8' ConfigPut
+$SCRIPTS/sacli --key 'cs.prof.defaults.dns.1' --value '1.1.1.1' ConfigPut
 
-# ---------- Create client ----------
-CLIENT=junaid PASS=1 ./openvpn-install.sh client add
+# 5. Route all client traffic through the VPN
+$SCRIPTS/sacli --key 'vpn.client.routing.reroute_gw' --value 'true' ConfigPut
 
-# ---------- NAT ----------
-IFACE=$(ip route get 8.8.8.8 | awk '{print $5; exit}')
-iptables -t nat -A POSTROUTING -o "$IFACE" -j MASQUERADE
-iptables-save > /etc/sysconfig/iptables
+# 6. Block access to VPN server services from clients (your latest request)
+$SCRIPTS/sacli --key 'vpn.server.routing.gateway_access' --value 'true' ConfigPut
 
+systemctl restart openvpnas
 
+# 7. Save and start
+$SCRIPTS/sacli ConfigSync
+$SCRIPTS/sacli start
