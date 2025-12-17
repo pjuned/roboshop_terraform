@@ -19,6 +19,6 @@ variable "zone_id" {
     default = "Z0453211BMHVK8GNH9ST"
 }
 
-variable "zone_name" {
+variable "domain_name" {
     default = "aws76s.online"
 }
