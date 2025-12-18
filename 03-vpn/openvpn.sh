@@ -36,6 +36,25 @@ systemctl restart openvpnas
 $SCRIPTS/sacli ConfigSync
 $SCRIPTS/sacli start
 
+#added from chatgpt
+cd /usr/local/openvpn_as/scripts
+
+./sacli --key "vpn.client.routing.routes" ConfigDel
+
+
+./sacli --key "vpn.client.routing.add_route" \
+        --value "true" ConfigPut
+
+./sacli --key "vpn.client.routing.routes.0" \
+        --value "10.0.0.0/16" ConfigPut
+
+
+
+
+./sacli ConfigSync
+systemctl restart openvpnas
+
+
 
 # #!/bin/bash
 # # non-interactive or headless installation
