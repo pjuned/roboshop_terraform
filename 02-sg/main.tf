@@ -101,13 +101,13 @@ module "payment" {
     project_name = var.project_name
     environment = var.environment
     sg_description = "SG for vpn"
-    vpc_id = data.aws_vpc.default.id
+    vpc_id = data.aws_ssm_parameter.vpc_id.value
     sg_name = "vpn"
   }
 
 
   # openvpn accepting connections from home 
-  resource "aws_security_group_rule" "home-openvpn" {
+  resource "aws_security_group_rule" "openvpn-home" {
   security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 0
@@ -119,7 +119,7 @@ module "payment" {
 
 
 #mongodb accepting connections from openvpn
-  resource "aws_security_group_rule" "vpn-mongodb" {
+  resource "aws_security_group_rule" "mongodb-openvpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -130,7 +130,7 @@ module "payment" {
 
 
 #mongodb accepting connections from catalogue
-  resource "aws_security_group_rule" "catalogue-mongodb" {
+  resource "aws_security_group_rule" "mongodb-catalogue" {
   source_security_group_id = module.catalogue.sg_id
   type              = "ingress"
   from_port         = 27017
@@ -140,7 +140,7 @@ module "payment" {
 }
 
 #mongodb accepting connections from user
-  resource "aws_security_group_rule" "user-mongodb" {
+  resource "aws_security_group_rule" "mongodb-user" {
   source_security_group_id = module.user.sg_id
   type              = "ingress"
   from_port         = 27017
@@ -150,7 +150,7 @@ module "payment" {
 }
 
 #redis accepting connections from vpn
-  resource "aws_security_group_rule" "vpn-redis" {
+  resource "aws_security_group_rule" "redis-vpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -161,7 +161,7 @@ module "payment" {
 
 
 #redis accepting connections from user
-  resource "aws_security_group_rule" "user-redis" {
+  resource "aws_security_group_rule" "redis-user" {
   source_security_group_id = module.user.sg_id
   type              = "ingress"
   from_port         = 6379
@@ -171,7 +171,7 @@ module "payment" {
 }
 
 #redis accepting connections from cart
-  resource "aws_security_group_rule" "cart-redis" {
+  resource "aws_security_group_rule" "redis-cart" {
   source_security_group_id = module.cart.sg_id
   type              = "ingress"
   from_port         = 6379
@@ -181,7 +181,7 @@ module "payment" {
 }
 
 #mysql accepting connections from vpn
-  resource "aws_security_group_rule" "vpn-mysql" {
+  resource "aws_security_group_rule" "mysql-vpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -191,7 +191,7 @@ module "payment" {
 }
 
 #mysql accepting connections from shipping
-  resource "aws_security_group_rule" "shipping-mysql" {
+  resource "aws_security_group_rule" "mysql-shipping" {
   source_security_group_id = module.shipping.sg_id
   type              = "ingress"
   from_port         = 3306
@@ -201,7 +201,7 @@ module "payment" {
 }
 
 #rabbitmq accepting connections from vpn
-  resource "aws_security_group_rule" "vpn-rabbitmq" {
+  resource "aws_security_group_rule" "rabbitmq-vpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -211,7 +211,7 @@ module "payment" {
 }
 
 #rabbitmq accepting connections from payment
-  resource "aws_security_group_rule" "payment-rabbitmq" {
+  resource "aws_security_group_rule" "rabbitmq-payment" {
   source_security_group_id = module.payment.sg_id
   type              = "ingress"
   from_port         = 5672
@@ -223,7 +223,7 @@ module "payment" {
 
 
 #catalogue accepting connections from vpn
-  resource "aws_security_group_rule" "vpn-catalogue" {
+  resource "aws_security_group_rule" "catalogue-vpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -233,7 +233,7 @@ module "payment" {
 }
 
 #catalogue accepting connections from web
-  resource "aws_security_group_rule" "web-catalogue" {
+  resource "aws_security_group_rule" "catalogue-web" {
   source_security_group_id = module.web.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -243,7 +243,7 @@ module "payment" {
 }
 
 #catalogue accepting connections from cart
-  resource "aws_security_group_rule" "cart-catalogue" {
+  resource "aws_security_group_rule" "catalogue-cart" {
   source_security_group_id = module.cart.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -253,7 +253,7 @@ module "payment" {
 }
 
 #user accepting connections from vpn
-  resource "aws_security_group_rule" "vpn-user" {
+  resource "aws_security_group_rule" "user-vpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -263,7 +263,7 @@ module "payment" {
 }
 
 #user accepting connections from web
-  resource "aws_security_group_rule" "web-user" {
+  resource "aws_security_group_rule" "user-web" {
   source_security_group_id = module.web.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -273,7 +273,7 @@ module "payment" {
 }
 
 #user accepting connections from payment
-  resource "aws_security_group_rule" "payment-user" {
+  resource "aws_security_group_rule" "user-payment" {
   source_security_group_id = module.payment.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -284,7 +284,7 @@ module "payment" {
 
 
 #cart accepting connections from vpn
-  resource "aws_security_group_rule" "vpn-cart" {
+  resource "aws_security_group_rule" "cart-vpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -294,7 +294,7 @@ module "payment" {
 }
 
 #cart accepting connections from web
-  resource "aws_security_group_rule" "web-cart" {
+  resource "aws_security_group_rule" "cart-web" {
   source_security_group_id = module.web.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -304,7 +304,7 @@ module "payment" {
 }
 
 #cart accepting connections from shipping
-  resource "aws_security_group_rule" "shipping-cart" {
+  resource "aws_security_group_rule" "cart-shipping" {
   source_security_group_id = module.shipping.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -314,7 +314,7 @@ module "payment" {
 }
 
 #cart accepting connections from payment
-  resource "aws_security_group_rule" "payment-cart" {
+  resource "aws_security_group_rule" "cart-payment" {
   source_security_group_id = module.payment.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -324,7 +324,7 @@ module "payment" {
 }
 
 #shipping accepting connections from vpn
-  resource "aws_security_group_rule" "vpn-shipping" {
+  resource "aws_security_group_rule" "shipping-vpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -334,7 +334,7 @@ module "payment" {
 }
 
 #shipping accepting connections from web
-  resource "aws_security_group_rule" "web-shipping" {
+  resource "aws_security_group_rule" "shipping-web" {
   source_security_group_id = module.web.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -344,7 +344,7 @@ module "payment" {
 }
 
 #payment accepting connections from vpn
-  resource "aws_security_group_rule" "vpn-payment" {
+  resource "aws_security_group_rule" "payment-vpn" {
   source_security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 22
@@ -354,7 +354,7 @@ module "payment" {
 }
 
 #payment accepting connections from web
-  resource "aws_security_group_rule" "web-payment" {
+  resource "aws_security_group_rule" "payment-web" {
   source_security_group_id = module.web.sg_id
   type              = "ingress"
   from_port         = 8080
@@ -365,7 +365,7 @@ module "payment" {
 
 
 #web accepting connection from vpn
-resource "aws_security_group_rule" "vpn-web" {
+resource "aws_security_group_rule" "web-vpn" {
 
   source_security_group_id = module.vpn.sg_id
   type = "ingress"
@@ -376,7 +376,7 @@ resource "aws_security_group_rule" "vpn-web" {
 }
 
 ##web accepting connection from internet
-resource "aws_security_group_rule" "internet-web" {
+resource "aws_security_group_rule" "web-internet" {
   cidr_blocks = ["0.0.0.0/0"]
   type = "ingress"
   from_port = 80
